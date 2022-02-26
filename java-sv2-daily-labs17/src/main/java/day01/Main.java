@@ -19,17 +19,24 @@ public class Main {
         }
 
         Flyway flyway = Flyway.configure().dataSource(mariaDbDSrc).load();
+        flyway.clean();
         flyway.migrate();
 
         ActorsRepository actorsRepo = new ActorsRepository(mariaDbDSrc);
-        //actorsRepo.saveActor("John Wick");
-
-        //System.out.println(actorsRepo.findActorsWithPrefix("J"));
 
         MoviesRepository moviesRepo = new MoviesRepository(mariaDbDSrc);
-        moviesRepo.saveMovie("Ghost in the Shell", LocalDate.of(1995, 11, 18));
 
-        List<Movie> movies = moviesRepo.findAllMovies();
-        System.out.println(movies);
+        ActorsMoviesRepository actorsMoviesRepo = new ActorsMoviesRepository(mariaDbDSrc);
+
+        ActorsMoviesService service = new ActorsMoviesService(actorsRepo, moviesRepo, actorsMoviesRepo);
+
+        service.insertMovieWithActors("Titanic", LocalDate.of(1997, 11, 17),
+                List.of("Leonardo DiCaprio", "Kate Winslet"));
+        service.insertMovieWithActors("Great Gatsby", LocalDate.of(2013, 5, 10),
+                List.of("Leonardo DiCaprio", "Tobey Maguire"));
+        service.insertMovieWithActors("Oscar", LocalDate.of(1967, 10, 11),
+                List.of("Louis de Funés", "Claude Rich"));
+        service.insertMovieWithActors("Oscar", LocalDate.of(1991, 4, 26),
+                List.of("Sylvester Stallone", "Peter Riegert"));
     }
 }
