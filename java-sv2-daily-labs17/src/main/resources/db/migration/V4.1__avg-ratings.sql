@@ -1,0 +1,1 @@
+ALTER TABLE movies ADD avg_rating DOUBLE(4,2);

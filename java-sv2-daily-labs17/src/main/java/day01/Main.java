@@ -28,7 +28,11 @@ public class Main {
 
         ActorsMoviesRepository actorsMoviesRepo = new ActorsMoviesRepository(mariaDbDSrc);
 
+        RatingsRepository ratingsRepo = new RatingsRepository(mariaDbDSrc);
+
         ActorsMoviesService service = new ActorsMoviesService(actorsRepo, moviesRepo, actorsMoviesRepo);
+
+        MoviesRatingsService moviesRatingsService = new MoviesRatingsService(moviesRepo, ratingsRepo);
 
         service.insertMovieWithActors("Titanic", LocalDate.of(1997, 11, 17),
                 List.of("Leonardo DiCaprio", "Kate Winslet"));
@@ -38,5 +42,8 @@ public class Main {
                 List.of("Louis de Funés", "Claude Rich"));
         service.insertMovieWithActors("Oscar", LocalDate.of(1991, 4, 26),
                 List.of("Sylvester Stallone", "Peter Riegert"));
+
+        moviesRatingsService.addRatings("Titanic", LocalDate.of(1997, 11, 17), 5, 3, 2);
+        moviesRatingsService.addRatings("Great Gatsby", LocalDate.of(2013, 5, 10), 5, 3, 2, 5, 4);
     }
 }

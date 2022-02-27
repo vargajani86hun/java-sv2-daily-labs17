@@ -22,7 +22,7 @@ public class MoviesRepository {
         try (//language=sql
              Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "INSERT INTO movies(title, release_date) VALUES (?, ?);", PreparedStatement.RETURN_GENERATED_KEYS
+                     "INSERT INTO movies(title, release_date) VALUES (?, ?);", Statement.RETURN_GENERATED_KEYS
              )) {
             stmt.setString(1, title);
             stmt.setDate(2, Date.valueOf(releaseDate));
@@ -40,20 +40,53 @@ public class MoviesRepository {
     }
 
     public List<Movie> findAllMovies() {
-
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement();
              //language=sql
              ResultSet rs = stmt.executeQuery(
                      "SELECT * FROM movies;"
              )) {
-
             return readMoviesFromResultSet(rs);
-
         } catch (SQLException sqle) {
             throw new IllegalStateException("Unable to read db", sqle);
         }
+    }
 
+    public void updateMovieRating(long id) {
+        try (Connection conn = dataSource.getConnection();
+             //language=sql
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "UPDATE movies SET avg_rating = ? WHERE id = ?;"
+             )) {
+            pstmt.setDouble(1, getMovieAverageRating(id));
+            pstmt.setLong(2, id);
+            pstmt.executeUpdate();
+        } catch (SQLException sqle) {
+            throw new IllegalStateException("Updating average rating has failed!", sqle);
+        }
+    }
+
+    private double getMovieAverageRating(long id) {
+        try (Connection conn = dataSource.getConnection();
+            //language=sql
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT AVG(rating) FROM ratings WHERE movie_id = ?;"
+             )) {
+            pstmt.setLong(1, id);
+            return getAverageRatingFrom(pstmt);
+        } catch (SQLException sqle) {
+            throw new IllegalStateException("Reading average rating has failed!", sqle);
+        }
+    }
+
+    private double getAverageRatingFrom(PreparedStatement pstmt) throws SQLException {
+        try (ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getDouble(1);
+            } else {
+                return 0;
+            }
+        }
     }
 
     public Optional<Movie> findMovie(String title, LocalDate releaseDate) {
@@ -64,13 +97,13 @@ public class MoviesRepository {
              )) {
             pstmt.setString(1, title);
             pstmt.setDate(2, Date.valueOf(releaseDate));
-            return processQuery(pstmt);
+            return getMovieFrom(pstmt);
         } catch (SQLException sqle) {
             throw new IllegalStateException("Unable to read movies table!");
         }
     }
 
-    private Optional<Movie> processQuery(PreparedStatement pstmt) throws SQLException {
+    private Optional<Movie> getMovieFrom(PreparedStatement pstmt) throws SQLException {
         try (ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
                 return Optional.of(new Movie(rs.getLong("id"),
